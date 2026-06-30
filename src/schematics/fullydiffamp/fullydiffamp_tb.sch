@@ -24,7 +24,6 @@ N 180 110 180 112.5 {lab=GND}
 N 110 105 110 115 {lab=GND}
 N 171.25 -42.5 205 -42.5 {lab=#net5}
 N 172.5 -18.75 206.25 -18.75 {lab=#net6}
-C {low-power-12b-first-order-delta-sigma-adc/fullydiffamp.sym} 130 60 0 0 {name=x1}
 C {vsource.sym} -210 -15 0 0 {name=V1 value="dc 0.6 ac 1 180" savecurrent=false}
 C {gnd.sym} -210 25 0 0 {name=l1 lab=GND}
 C {vsource.sym} -80 20 0 0 {name=V2 value="dc 0.6 ac 1 0" savecurrent=false}
@@ -40,3 +39,4 @@ C {gnd.sym} 110 115 0 0 {name=l7 lab=GND}
 C {gnd.sym} 180 120 0 0 {name=l8 lab=GND}
 C {noconn.sym} 205 -42.5 0 1 {name=l9}
 C {noconn.sym} 206.25 -18.75 0 1 {name=l10}
+C {src/schematics/fullydiffamp/fullydiffamp.sym} 130 60 0 0 {name=x1}
