@@ -58,7 +58,7 @@ In the sigma-delta loop, this feedback signal is subtracted from the analog inpu
 
 <p align="center">
 
-&#x20; <img src="docs/images/dac1bit\_schematics.jpeg" alt="1-Bit DAC Schematic" width="800"/>
+&#x20; <img src="../../../docs/images/dac1bit\_schematics.jpeg" alt="1-Bit DAC Schematic" width="800"/>
 
 </p>
 

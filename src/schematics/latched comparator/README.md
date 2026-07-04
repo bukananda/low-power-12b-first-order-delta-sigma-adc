@@ -58,7 +58,7 @@ In a sigma-delta ADC, the comparator does not directly produce the final multi-b
 
 <p align="center">
 
-&#x20; <img src="docs/images/comparator\_schematics.jpeg" alt="Comparator Schematic" width="800"/>
+&#x20; <img src="../../../docs/images/comparator\_schematics.jpeg" alt="Comparator Schematic" width="800"/>
 
 </p>
 

@@ -68,7 +68,7 @@ The integrator is implemented using a fully differential switched-capacitor topo
 
 <p align="center">
 
-&#x20; <img src="docs/images/integrator\_schematics.jpeg" alt="Switched-Capacitor Integrator Schematic" width="800"/>
+&#x20; <img src="../../../docs/images/integrator\_schematics.jpeg" alt="Switched-Capacitor Integrator Schematic" width="800"/>
 
 </p>
 

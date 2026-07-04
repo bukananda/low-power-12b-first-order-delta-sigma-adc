@@ -64,7 +64,7 @@ The amplifier is designed using a fully differential topology to improve noise i
 
 <p align="center">
 
-&#x20; <img src="docs/images/fullydiffamp\_schematics.jpeg" alt="Fully Differential Amplifier Schematic" width="800"/>
+&#x20; <img src="../../../docs/images/fullydiffamp\_schematics.jpeg" alt="Fully Differential Amplifier Schematic" width="800"/>
 
 </p>
 
