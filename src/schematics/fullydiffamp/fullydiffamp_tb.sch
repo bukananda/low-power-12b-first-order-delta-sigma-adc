@@ -15,8 +15,7 @@ N -107.5 -87.5 -107.5 -77.5 {lab=GND}
 N 30 -65 70 -65 {lab=VDD}
 N -107.5 -157.5 -107.5 -147.5 {lab=VDD}
 N 110 7.5 110 45 {lab=#net3}
-N 180 112.5 180 120 {lab=GND}
-N 180 110 180 112.5 {lab=GND}
+N 180 110 180 120 {lab=GND}
 N 110 105 110 115 {lab=GND}
 N 171.25 -42.5 205 -42.5 {lab=#net4}
 N 172.5 -18.75 206.25 -18.75 {lab=#net5}
@@ -37,15 +36,23 @@ C {gnd.sym} 110 115 0 0 {name=l7 lab=GND}
 C {gnd.sym} 180 120 0 0 {name=l8 lab=GND}
 C {noconn.sym} 205 -42.5 0 1 {name=l9}
 C {noconn.sym} 206.25 -18.75 0 1 {name=l10}
-C {A52/fullydiffamp.sym} 130 60 0 0 {name=x1}
 C {devices/code_shown.sym} -685 95 0 0 {name=MODELS only_toplevel=true
 format="tcleval( @value )"
 value="
 .include $::180MCU_MODELS/design.ngspice
 .lib $::180MCU_MODELS/sm141064.ngspice typical
 "}
-C {devices/code_shown.sym} -1570 -755 0 0 {name=NGSPICE only_toplevel=true
+C {devices/code_shown.sym} -1510 -655 0 0 {name=NGSPICE only_toplevel=true
 value="
+* =====================================================
+* 1. GF180 MODEL
+* =====================================================
+.lib /foss/pdks/gf180mcuD/libs.tech/ngspice/sm141064.ngspice typical
+.inc /foss/pdks/gf180mcuD/libs.tech/ngspice/design.ngspice
+
+* =====================================================
+* 2. PARAMETERS
+* =====================================================
 .param VDDVAL=3.3
 .param VCM=1.65
 .param VBIASN_VAL=0.89
@@ -53,62 +60,97 @@ value="
 .param CL=0.5p
 .param GCMFB=1m
 
-.option savecurrents
-.option reltol=1e-4
-.option abstol=1e-12
-.option vntol=1e-6
-.option temp=27
+.option reltol=1e-4 abstol=1e-12 vntol=1e-6 temp=27
 
-* Output load capacitors
+* =====================================================
+* 3. LOAD & LEAKAGE
+* =====================================================
 CLP Vop 0 \{CL\}
 CLM Vom 0 \{CL\}
-
-* Weak leakage path for convergence
 RLEAKP Vop 0 1T
 RLEAKM Vom 0 1T
 
-* Ideal common-mode feedback helper
-* Pakai ini kalau diff amp belum punya real CMFB.
-* Nanti untuk final design, ideal CMFB ini sebaiknya diganti real CMFB.
-Bcmop Vop 0 I = \{GCMFB * (((v(Vop) + v(Vom))/2) - VCM)\}
-Bcmom Vom 0 I = \{GCMFB * (((v(Vop) + v(Vom))/2) - VCM)\}
+* =====================================================
+* 4. IDEAL CMFB
+* =====================================================
+Bcmop Vop 0 I=\{GCMFB*(((v(Vop)+v(Vom))/2)-VCM)\}
+Bcmom Vom 0 I=\{GCMFB*(((v(Vop)+v(Vom))/2)-VCM)\}
 
+* =====================================================
+* 5. CONTROL BLOCK (ANALYSIS)
+* =====================================================
 .control
+* Wajib menyimpan parameter internal sebelum analisis jalan
 save all
+save @m.xm7.m0[id] @m.xm7.m0[gm] @m.xm7.m0[gds] @m.xm7.m0[vgs] @m.xm7.m0[vds] @m.xm7.m0[vdsat]
 
+echo ==========================================
+echo OTA VERIFICATION START
+echo ==========================================
+
+* -----------------------------------------------------
+* OP ANALYSIS (DC Bias & Sizing Validation)
+* -----------------------------------------------------
+echo ===== DC OPERATING POINT =====
 op
 
-echo ================================
-echo DC Operating Point Summary
-echo ================================
-
-print v(VDD)
-print v(Vp) v(Vm)
-print v(Vbiasn) v(Vbiasp)
-print v(Vop) v(Vom)
-
+* Kalkulasi Variabel Makro
 let vocm = (v(Vop)+v(Vom))/2
-let vod  = v(Vop)-v(Vom)
+let vod = v(Vop)-v(Vom)
 
-print vocm
-print vod
+* Ekstraksi Parameter Transistor Input (XM7)
+let id_m7 = @m.xm7.m0[id]
+let gm_m7 = @m.xm7.m0[gm]
+let gds_m7 = @m.xm7.m0[gds]
+let vgs_m7 = @m.xm7.m0[vgs]
+let vds_m7 = @m.xm7.m0[vds]
+let vdsat_m7 = @m.xm7.m0[vdsat]
+let gm_id = gm_m7 / id_m7
+let intrinsic_gain = gm_m7 / gds_m7
 
-echo ================================
-echo Supply Current and Power
-echo ================================
+echo --- Output Voltages ---
+print v(VDD) v(Vbiasp) v(Vbiasn) v(Vop) v(Vom) vocm vod
 
-print i(V3)
+echo --- XM7 Parameters (Input Pair) ---
+print id_m7 gm_m7 gds_m7 vgs_m7 vds_m7 vdsat_m7 gm_id intrinsic_gain
 
-let pwr = -v(VDD)*i(V3)
-print pwr
+* Simpan khusus hasil DC agar raw file rapi
+write ota_op.raw v(Vop) v(Vom) vocm vod id_m7 gm_m7 gds_m7 vgs_m7 vds_m7 vdsat_m7 gm_id intrinsic_gain
 
-echo ================================
-echo Device Operating Point
-echo Use show all to inspect gm, gds, vds, vdsat
-echo ================================
+* -----------------------------------------------------
+* AC ANALYSIS (Bode Plot)
+* -----------------------------------------------------
+echo ===== AC ANALYSIS =====
+ac dec 100 1 10G
 
-show all
+let vout_diff = v(Vop)-v(Vom)
+let gain_db = db(vout_diff)
+let phase_deg = 180/PI * ph(vout_diff)
 
+write ota_ac.raw gain_db phase_deg vout_diff
+
+* -----------------------------------------------------
+* TRANSIENT ANALYSIS
+* -----------------------------------------------------
+echo ===== TRANSIENT =====
+tran 0.5n 5u
+
+let vout_diff_tran = v(Vop)-v(Vom)
+write ota_tran.raw v(Vop) v(Vom) vout_diff_tran
+
+* -----------------------------------------------------
+* NOISE ANALYSIS
+* -----------------------------------------------------
+echo ===== INPUT REFERRED NOISE =====
+noise v(Vop, Vom) V1 dec 20 1k 100Meg
+
+* Set plot ke noise1 agar onoise_spectrum bisa disimpan dengan benar
+setplot noise1
+write ota_noise.raw onoise_spectrum inoise_spectrum
+
+echo ==========================================
+echo FINISHED! BUKA .RAW FILE DI GAW
+echo ==========================================
 .endc
-
 "}
+C {low-power-12b-first-order-delta-sigma-adc/src/schematics/fullydiffamp/fullydiffamp.sym} 130 60 0 0 {name=x1}
