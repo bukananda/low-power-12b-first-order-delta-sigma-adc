@@ -12,16 +12,11 @@ In the sigma-delta loop, this feedback signal is subtracted from the analog inpu
 |--------------|--------------------|----------|
 | Supply Voltage | 3.3 | V |
 | DAC Resolution | 1 | bit |
-| Output Levels | V<sub>REF+</sub> / V<sub>REF-</sub> | V |
-| Common-Mode Reference | 1.65 | V |
-| Input Control Signal | Comparator Bitstream | - |
-| Target Input Bandwidth | 2 | MHz |
-| OSR | 20 | - |
-| Target Sampling Frequency | 80 | MHz |
-| Target SNDR | >65 | dB |
-| Target ENOB | >10 | bits |
-| DAC Function | Analog Feedback Generation | - |
-| Power Budget Contribution | Part of <3 mW ADC budget | - |
+| Output Levels | V<sub>REF+</sub> (3.3) / V<sub>REF-</sub> (0) | V |
+| Rds Transmission Gate | <1000 | Ω |
+| I<sub>Leakage</sub> | < 10 | pA |
+| Delay<sub>I-O</sub> |< 100 | ns | 
+| Power | < 3 | mW |
 
 </div>
 
