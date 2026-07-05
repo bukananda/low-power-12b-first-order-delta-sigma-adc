@@ -21,10 +21,10 @@ The amplifier is designed using a fully differential topology to improve noise i
 | Target SNDR | >65 | dB |
 | Target ENOB | >10 | bits |
 | DC Gain | >60 | dB |
-| Unity-Gain Frequency | >400 | MHz |
+| Unity-Gain Frequency | >100 | MHz |
 | Phase Margin | >55 | degree |
 | Load Capacitance | 0.5 | pF |
-| Power Budget Contribution | Part of <3 mW ADC budget | - |
+| Power Consumption | < 3 | mW |
 
 </div>
 
