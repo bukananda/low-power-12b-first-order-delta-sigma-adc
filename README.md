@@ -129,7 +129,6 @@ Each block lives in its own folder with the schematic (`.sch`), symbol (`.sym`),
 | 🎬 Schematic Review video | [Google Drive](https://drive.google.com/file/d/1ZalpSG7483_RGrQqDSEjqazJp0OSJbgO/view?usp=drivesdk) |
 | 📈 Progress tracker (live) | [Google Sheets](https://docs.google.com/spreadsheets/d/1vq9HZ6a_NoaJxv5bcDqT_2UIH9_rgmeoz8I_xhGFr9E/edit?gid=690406390#gid=690406390) |
 | 🧾 Team project issue | [sscs-chipathon-2026 #156](https://github.com/sscs-ose/sscs-chipathon-2026/issues/156) |
-| 🏗️ Padring / RTL-to-GDS template docs | [`docs/`](docs) (workshop slot spec, native & Docker build guides) |
 
 </div>
 
