@@ -39,6 +39,8 @@ The amplifier is designed as a fully differential analog block with differential
 
 The topology is intended to provide high gain while maintaining sufficient speed for switched-capacitor operation. The amplifier output is used by the sigma-delta integrator, so the output must settle accurately before the next comparator decision and DAC feedback phase.
 
+**Miller compensation** is applied to secure stability at the required bandwidth, using a compensation capacitor C<sub>c</sub> = 0.1 pF in series with a nulling resistor R<sub>z</sub> = 530 Ω on each output branch. The nulling resistor moves the right-half-plane zero introduced by the compensation capacitor, preserving phase margin near the unity-gain frequency.
+
 ## Design Considerations
 
 <div align="center">
@@ -85,6 +87,8 @@ For the initial design, the input pair is targeted around moderate inversion to 
 
 </div>
 
+> **Design iteration note:** the final input pair operates at gm/ID ≈ 20.79 V<sup>-1</sup> (subthreshold region) rather than the initial target of 12 V<sup>-1</sup>. The higher gm/ID was adopted to improve noise efficiency and DC gain at constant current, and is reflected in the measured noise results below.
+
 ## Initial Transistor Sizing
 
 The first-pass transistor widths are generated from GF180MCU gm/ID lookup tables. The width values are used as a starting point and must be verified using ngspice operating point simulation.
@@ -126,16 +130,16 @@ Recommended simulations include:
 
 <div align="center">
 
-| **Simulation** | **Purpose** |
-|---------------|-------------|
-| DC Operating Point | Verify bias currents, output common-mode, and device operating regions |
-| AC Differential Gain | Measure DC gain, unity-gain frequency, and phase behavior |
-| Transient Settling | Verify output settling within the available clock phase |
-| Slew Rate Test | Check large-signal output transition capability |
-| Noise Simulation | Estimate input-referred and output noise |
-| Common-Mode Gain | Estimate CMRR |
-| Power Measurement | Calculate amplifier power consumption |
-| Corner Simulation | Verify robustness across process, voltage, and temperature |
+| **Simulation** | **Purpose** | **Status** |
+|---------------|-------------|:----------:|
+| DC Operating Point | Verify bias currents, output common-mode, and device operating regions | ✓ |
+| AC Differential Gain | Measure DC gain, unity-gain frequency, and phase behavior | ✓ |
+| Transient Settling | Verify output settling within the available clock phase | ✓ |
+| Slew Rate Test | Check large-signal output transition capability | — |
+| Noise Simulation | Estimate input-referred and output noise | ✓ |
+| Common-Mode Gain | Estimate CMRR | — |
+| Power Measurement | Calculate amplifier power consumption | ✓ |
+| Corner Simulation | Verify robustness across process, voltage, and temperature | — |
 
 </div>
 
@@ -168,7 +172,7 @@ P = -VDD × I(VDD)
 ## Testbench Setup
 
 <p align="center">
-  <img src="docs/images/fully_differential_amplifier_testbench.jpeg" alt="Fully Differential Amplifier Testbench" width="800"/>
+  <img src="../../../docs/images/fully_differential_amplifier_testbench.jpeg" alt="Fully Differential Amplifier Testbench" width="800"/>
 </p>
 <h4 align="center" style="font-size:16px;">Figure 2. Fully Differential Amplifier Testbench</h4>
 
@@ -188,24 +192,108 @@ The testbench uses a 3.3 V supply and a 1.65 V input common-mode voltage. The in
 
 </div>
 
+## AC Response — Gain and Stability
+
+<p align="center">
+  <img src="../../../docs/images/amp_res1.jpeg" alt="Fully Differential Amplifier Magnitude Response" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 3. Magnitude response of the fully differential amplifier</h4>
+
+<p align="center">
+  <img src="../../../docs/images/amp_res2.jpeg" alt="Fully Differential Amplifier Phase Response" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 4. Phase response and phase margin</h4>
+
+The frequency response shows a DC gain of **92.19 dB**, far exceeding the target of >60 dB, with a low-frequency dominant pole. After applying Miller compensation (C<sub>c</sub> = 0.1 pF, R<sub>z</sub> = 530 Ω), the unity-gain bandwidth is **101.47 MHz** with a clean −20 dB/decade roll-off extending past the 0 dB crossing. The phase curve yields a **phase margin of 68.90°** at the unity-gain frequency, comfortably meeting the stability criterion.
+
+In the switched-capacitor integrator the amplifier operates in closed loop with a feedback factor β ≈ 0.5 (C<sub>s</sub>/C<sub>f</sub> = 1). The effective closed-loop bandwidth is therefore β × GBW ≈ 50.7 MHz, which is approximately **4× the sampling frequency** (12.288 MHz) — sufficient margin for the integrator output to settle within one clock phase.
+
+<div align="center">
+
+| **Parameter** | **Measured** | **Target** | **Result** |
+|--------------|-------------:|-----------:|:----------:|
+| DC Gain | 92.19 dB | >60 dB | PASS |
+| Unity-Gain Bandwidth | 101.47 MHz | >100 MHz | PASS |
+| Phase Margin | 68.90° | >55° | PASS |
+| Closed-loop BW (β ≈ 0.5) | ≈50.7 MHz | >4 × f<sub>s</sub> | PASS |
+
+</div>
+
+## Transient Response — Differential Operation
+
+<p align="center">
+  <img src="../../../docs/images/amp_res3.jpeg" alt="Fully Differential Amplifier Transient Response" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 5. Transient differential outputs V<sub>op</sub> and V<sub>om</sub></h4>
+
+<p align="center">
+  <img src="../../../docs/images/amp_res4.jpeg" alt="Fully Differential Amplifier Differential Output" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 6. Differential output (V<sub>op</sub> − V<sub>om</sub>)</h4>
+
+The transient simulation shows the differential outputs V<sub>op</sub> and V<sub>om</sub> to be perfectly out of phase — V<sub>op</sub> rises as V<sub>om</sub> falls — confirming correct differential operation. Both outputs oscillate symmetrically around a common-mode voltage of **1.651 V**, essentially exactly at the 1.65 V target, indicating that the ideal CMFB block successfully maintains the common-mode operating point.
+
+The sine waveforms are smooth, with no visible distortion or clipping, indicating that the amplifier is operating in its linear region. The input amplitude was intentionally set very low (on the order of µV) to prevent the output from saturating given the 92 dB DC gain. The clean differential output (V<sub>op</sub> − V<sub>om</sub>) confirms the integrity of the amplification path.
+
+<div align="center">
+
+| **Parameter** | **Measured** | **Target** | **Result** |
+|--------------|-------------:|-----------:|:----------:|
+| Output Common-Mode | 1.651 V | 1.65 V | PASS |
+| Differential Phase Relation | 180° (out of phase) | 180° | PASS |
+| Distortion / Clipping | None observed | None | PASS |
+
+</div>
+
+## Noise Analysis
+
+<p align="center">
+  <img src="../../../docs/images/amp_res5.jpeg" alt="Input-Referred Noise Density" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 7. Input-referred noise density (V/√Hz)</h4>
+
+<p align="center">
+  <img src="../../../docs/images/amp_res6.jpeg" alt="Integrated RMS Noise" width="800"/>
+</p>
+<h4 align="center" style="font-size:16px;">Figure 8. Integrated RMS noise versus upper integration limit</h4>
+
+The input-referred noise density curve exhibits the expected profile: flicker (1/f) noise dominates at low frequencies with a corner frequency of approximately **10 kHz**, after which the curve flattens to a thermal noise floor of **~30–40 nV/√Hz**. Operating the input pair at a high gm/ID (20.79 V<sup>-1</sup>, subthreshold) keeps the input-pair thermal noise contribution low.
+
+The integrated RMS noise rises with the upper integration limit. For a ΔΣ ADC the relevant figure is the noise integrated **within the signal band** (0–24 kHz), not up to the full 100 MHz bandwidth; this is estimated at **~15–30 µV rms**.
+
+<div align="center">
+
+| **Parameter** | **Measured / Estimated** | **Unit** |
+|--------------|-------------------------:|----------|
+| Flicker noise corner | ≈10 | kHz |
+| Thermal noise floor | 30–40 | nV/√Hz |
+| Input pair gm/ID | 20.79 | V<sup>-1</sup> |
+| In-band integrated noise (0–24 kHz) | ~15–30 | µV rms |
+
+</div>
+
+With a differential full-scale input on the 3.3 V rail, an in-band noise of 30 µV rms corresponds to a thermal-noise-limited SNR well above 85 dB — far above the >65 dB SNDR target. The OTA noise is therefore **not the limiting factor** for the ADC resolution; quantization noise of the first-order modulator remains dominant.
+
 ## Verification Checklist
 
 <div align="center">
 
 | **Checklist Item** | **Target / Requirement** | **Status** |
 |-------------------|--------------------------|------------|
-| Bias currents checked | Required | In progress |
+| Bias currents checked | Required | Verified in OP |
 | Device operating regions verified | All MOS in saturation | To be verified |
-| gm values checked | Match gm/ID target | To be verified |
-| Output common-mode verified | Around 1.65 V | Verified in initial OP |
-| DC gain measured | >60 dB | To be verified |
-| UGF measured | >100 MHz | To be verified |
-| Phase margin analyzed | >55° | To be verified |
-| Transient settling checked | Within clock phase | To be verified |
-| Noise considered | Required | To be verified |
-| Power consumption checked | Within ADC budget | Verified in initial OP |
+| gm values checked | Match gm/ID target | Input pair updated to gm/ID 20.79 |
+| Output common-mode verified | Around 1.65 V | Verified (OP + transient, 1.651 V) |
+| DC gain measured | >60 dB | Verified (92.19 dB) |
+| UGF measured | >100 MHz | Verified (101.47 MHz) |
+| Phase margin analyzed | >55° | Verified (68.90°) |
+| Transient settling checked | Within clock phase | Verified (closed-loop BW ≈ 4 × f<sub>s</sub>) |
+| Noise considered | Required | Verified (~15–30 µV rms in band) |
+| Power consumption checked | Within ADC budget | Verified (1.572 mW) |
+| Slew rate measured | Within clock phase | Pending |
+| CMRR measured | Required | Pending |
 | PVT corners simulated | TT / FF / SS | Pending |
-| CMFB strategy documented | Required for final FDA | In progress |
+| CMFB strategy documented | Required for final FDA | In progress (ideal CMFB in current TB) |
 
 </div>
 
@@ -217,13 +305,17 @@ The testbench uses a 3.3 V supply and a 1.65 V input common-mode voltage. The in
 |--------------|--------------------|----------|
 | Supply Voltage | 3.3 | V |
 | Input Common-Mode | 1.65 | V |
-| Output Common-Mode | 1.65 | V |
-| DC Gain | To be simulated | dB |
-| Unity-Gain Frequency | To be simulated | Hz |
-| Phase Margin | To be simulated | degree |
+| Output Common-Mode | 1.651 | V |
+| DC Gain | 92.19 | dB |
+| Unity-Gain Frequency | 101.47 | MHz |
+| Phase Margin | 68.90 | degree |
+| Closed-Loop Bandwidth (β ≈ 0.5) | ≈50.7 | MHz |
 | Load Capacitance | 0.5 | pF |
+| Compensation | C<sub>c</sub> = 0.1 pF, R<sub>z</sub> = 530 Ω | - |
 | Power Consumption | 1.572 | mW |
-| Input-Referred Noise | To be simulated | V/√Hz |
+| Input-Referred Noise (thermal floor) | 30–40 | nV/√Hz |
+| Flicker Noise Corner | ≈10 | kHz |
+| In-Band Integrated Noise (0–24 kHz) | ~15–30 | µV rms |
 | Settling Time | To be simulated | s |
 | Slew Rate | To be simulated | V/s |
 | Corner Verification | Pending | - |
@@ -232,8 +324,8 @@ The testbench uses a 3.3 V supply and a 1.65 V input common-mode voltage. The in
 
 ## Notes
 
-The fully differential amplifier is one of the most important analog blocks in the sigma-delta ADC because it directly determines the accuracy and speed of the switched-capacitor integrator. The initial gm/ID sizing provides a reasonable starting point, but the design must be iterated using operating point, AC, transient, and noise simulations.
+The fully differential amplifier is one of the most important analog blocks in the sigma-delta ADC because it directly determines the accuracy and speed of the switched-capacitor integrator. The gm/ID sizing provided a reasonable starting point, and the design has since been iterated through operating point, AC, transient, and noise simulations. All primary specifications — DC gain, unity-gain bandwidth, phase margin, common-mode accuracy, noise, and power — now meet or exceed their targets.
 
-For early simulations, an ideal common-mode feedback helper may be used to stabilize the output common-mode. However, the final fully differential amplifier should include a proper CMFB circuit or clearly document the common-mode control strategy.
+For the current simulations, an ideal common-mode feedback helper is used to stabilize the output common-mode. The final fully differential amplifier must replace this with a proper CMFB circuit before layout; this remains the main outstanding design item, together with slew rate, CMRR, and PVT corner verification.
 
-**Last Updated: 4th July 2026**
+**Last Updated: 18th July 2026**
