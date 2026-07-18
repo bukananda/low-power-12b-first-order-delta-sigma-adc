@@ -23,7 +23,7 @@ C {lab_pin.sym} 370 -200 1 0 {name=p1 sig_type=std_logic lab=OUT}
 C {lab_pin.sym} 140 -220 1 0 {name=p2 sig_type=std_logic lab=IN}
 C {devices/code_shown.sym} 430 -375 0 0 {name=NGSPICE only_toplevel=true
 value="
-.param Wp=20u Wn=10u Ws=40u Ls=8u
+.param Wp=20u Wn=10u Ws=40u Ls=10u
 .control
 save all
 tran 100n 500u
